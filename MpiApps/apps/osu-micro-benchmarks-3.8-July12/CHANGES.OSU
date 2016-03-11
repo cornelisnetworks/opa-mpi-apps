@@ -1,0 +1,72 @@
+OSU Micro Benchmarks v3.8 (11/07/12)
+* New Features & Enhancements
+    - New UPC benchmarks
+        * osu_upc_memput
+        * osu_upc_memget
+
+OSU Micro Benchmarks v3.7 (9/07/12)
+* New Features & Enhancements
+    - New OpenSHMEM benchmarks
+        * osu_oshm_get
+        * osu_oshm_put_mr
+        * osu_oshm_atomics
+        * osu_oshm_put
+    - Organize installation directory according to benchmark type
+* Bug Fixes
+    - Destroy cuda context before exiting
+
+OSU Micro Benchmarks v3.6 (4/30/12)
+* New Features & Enhancements
+    - New collective benchmarks
+        * osu_allgather
+        * osu_allgatherv
+        * osu_allreduce
+        * osu_alltoall
+        * osu_alltoallv
+        * osu_barrier
+        * osu_bcast
+        * osu_gather
+        * osu_gatherv
+        * osu_reduce
+        * osu_reduce_scatter
+        * osu_scatter
+        * osu_scatterv
+* Bug Fixes
+    - Fix GPU binding issue when running with HH mode
+
+OSU Micro Benchmarks v3.5.2 (3/22/12)
+* Bug Fixes
+    - Fix typo which led to use of incorrect buffers
+
+OSU Micro Benchmarks v3.5.1 (2/02/12)
+* New Features & Enhancements
+    - Provide script to set GPU affinity for MPI processes
+* Bug Fixes
+    - Removed GPU binding after MPI_Init to avoid switching context
+
+OSU Micro Benchmarks v3.5 (11/09/11)
+* New Features & Enhancements
+    - Extension of osu_latency, osu_bw, and osu_bibw benchmarks to evaluate the
+      performance of MPI_Send/MPI_Recv operation with NVIDIA GPU device and
+      CUDA support
+        - This functionality is exposed when configured with --enable-cuda
+          option
+    - Flexibility for using buffers in NVIDIA GPU device (D) and host memory (H)
+    - Flexibility for selecting data movement between D->D, D->H and H->D
+
+OSU Micro Benchmarks v3.4 (09/13/11)
+* New Features & Enhancements
+    - Add passive one-sided communication benchmarks
+    - Update one-sided communication benchmarks to provide shared memory hint
+      in MPI_Alloc_mem calls
+    - Update one-sided communication benchmarks to use MPI_Alloc_mem for buffer
+      allocation
+    - Give default values to configure definitions (can now build directly with
+      mpicc)
+    - Update latency benchmarks to begin from 0 byte message
+* Bug Fixes
+    - Remove memory leaks in one-sided communication benchmarks
+    - Update benchmarks to touch buffers before using them for communication
+    - Fix osu_get_bw test to use different buffers for concurrent communication
+      operations
+    - Fix compilation warnings

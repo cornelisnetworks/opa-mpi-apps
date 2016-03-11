@@ -1,0 +1,20 @@
+This directory contains versions of the BLAS library developed by
+Kazushige Goto.  More details about this library can be found at:
+http://www.cs.utexas.edu/users/flame/goto
+
+For each architecture a single default library is linked to libgoto.so
+The Make.ICS.`uname -s` file fill use libgoto.so.  If a different default
+is desired, the symbolic link can be changed.
+
+A xerbla.o file is also supplied along with the source file from which it
+was generated.  This file is needed by libgoto to satisfy a few OS specific
+references.
+
+architectures are as follows:
+amd64 - Linux 64 bit Opteron systems
+i686 - Linux 32 bit Intel Pentium and AMD Athlon series
+em64t - Linux 64 bit Intel Nocona series (Xeon with EM64T)
+ia64 - Linux Intel Itanium
+Darwin - MAC OS X with PPC
+ppc - Linux Power PC 970
+

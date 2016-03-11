@@ -1,0 +1,10 @@
+MPI_HOME    = /usr
+MPI_INCLUDE = /usr/include
+ARCH        = 
+COMM        = 
+LIB_PATH    = -L$(MPIR_HOME)/lib/$(ARCH)/$(COMM)
+LIBS        = -lmpi -lm   
+CC          = cc
+CLINKER     = cc
+OPTFLAGS    = 
+CPPFLAGS    = -DnoCHECK

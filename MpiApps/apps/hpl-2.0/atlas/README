@@ -1,0 +1,3 @@
+These are Atlas BLAS libraries built for low end models of the supported CPUs.
+To better optimize Atlas, you should build it on the exact CPU model of your
+cluster.

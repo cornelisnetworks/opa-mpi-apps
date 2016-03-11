@@ -1,0 +1,7 @@
+MPI_HOME    = /usr/lpp/ppe.poe/
+MPI_INCLUDE = $(MPI_HOME)/include
+LIBS        = -lm
+CC          = mpcc
+CLINKER     = mpcc 
+OPTFLAGS    =
+CPPFLAGS    = -DnoCHECK

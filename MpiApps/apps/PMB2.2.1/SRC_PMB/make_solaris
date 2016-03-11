@@ -1,0 +1,11 @@
+MPI_HOME    = /Vol/mpi/mpich-1.2
+MPI_INCLUDE = $(MPI_HOME)/include
+ARCH        = solaris
+COMM        = ch_p4
+LIBS        = -lmpich -lm -lnsl -lsocket
+LIB_PATH    = -L$(MPI_HOME)/lib/$(ARCH)/$(COMM)
+LIB_PATH    = -L$(MPI_HOME)/lib
+CC          = cc
+CLINKER     = cc
+OPTFLAGS    = 
+CPPFLAGS    = -DnoCHECK
