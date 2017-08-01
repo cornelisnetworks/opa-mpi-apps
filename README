@@ -5,7 +5,7 @@ OPA MPI apps
 
   1. mkdir -p $HOME/rpmbuild/{SOURCES,RPMS,SRPMS}
   2. tar czf $HOME/rpmbuild/SOURCES/opa-mpi-apps.tgz --exclude-vcs .
-  3. rpmbuild -ba ./mpi-apps.spec
+  3. rpmbuild -ba ./OpenIb_Host/mpi-apps.spec
 
   This will build the opa-mpi-apps RPMs in $HOME/rpmbuild/RPMS/(architecture)/
 

@@ -142,7 +142,17 @@ ifeq "$(Chip)" "x86_64"
 endif
 
 ifneq ("$(wildcard /etc/redhat-release)", "")
-	LAlib = /usr/lib64/atlas/libsatlas.so.3
+	ifeq "$(shell grep -i centos /etc/redhat-release | wc -l)" "1"
+		major:=$(shell cat /etc/redhat-release | cut -d' ' -f3 | cut -d. -f1)
+	else
+		# If not CentOS by default, assuming it is redhat enterprise
+		major:=$(shell cat /etc/redhat-release | cut -d' ' -f7 | cut -d. -f1)
+	endif
+	ifeq "$(major)" "6"
+        	LAlib = /usr/lib64/atlas/libatlas.so.3  /usr/lib64/atlas/libcblas.so.3  /usr/lib64/atlas/libclapack.so.3  /usr/lib64/atlas/libf77blas.so.3  /usr/lib64/atlas/liblapack.so.3  /usr/lib64/atlas/libptcblas.so.3  /usr/lib64/atlas/libptf77blas.so.3
+	else
+        	LAlib = /usr/lib64/atlas/libsatlas.so.3
+	endif
 else
 	ifeq "$(strip $(Chip))/$(strip $(Family))" "amd64/21"
 		LAdir = $(TOPdir)/atlas/amd64

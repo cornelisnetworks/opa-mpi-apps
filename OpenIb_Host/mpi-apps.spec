@@ -1,6 +1,6 @@
 Name: opa-mpi-apps
-Version: 10.0.0.0
-Release: 692
+Version: 10.4.1.0
+Release: 1%{?dist}
 Summary: Intel MPI benchmarks and Applications used by opa-fast-fabric
 Group: System Environment/Libraries
 License: GPLv2/BSD
@@ -28,13 +28,13 @@ Contains applications and source for testing MPI performance in conjunction with
 %define mpi_apps_files bandwidth latency osu2 hpl-2.0 imb PMB2.2.1 osu-micro-benchmarks-3.8-July12 mpi_multibw
 
 
-mkdir -p $RPM_BUILD_ROOT/opt/opa/src/mpi_apps
+mkdir -p $RPM_BUILD_ROOT/usr/src/opa/mpi_apps
 
 cd ./MpiApps
-cp ./apps/* -r $RPM_BUILD_ROOT/opt/opa/src/mpi_apps/
+cp ./apps/* -r $RPM_BUILD_ROOT/usr/src/opa/mpi_apps/
 
-echo "/opt/opa/src/mpi_apps/%{mpi_apps_files}" > %{_builddir}/mpi_apps.list
-sed -i 's;[ ];\n/opt/opa/src/mpi_apps/;g' %{_builddir}/mpi_apps.list 
+echo "/usr/src/opa/mpi_apps/%{mpi_apps_files}" > %{_builddir}/mpi_apps.list
+sed -i 's;[ ];\n/usr/src/opa/mpi_apps/;g' %{_builddir}/mpi_apps.list 
 
 
 %clean

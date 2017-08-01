@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
   if (myid == 0) 
   {
     fprintf(stdout, "# PathScale Modified OSU MPI Bandwidth Test\n");
-    fprintf(stdout, "(OSU Version 2.2, PathScale $Revision: 1.4 $)\n");
+    fprintf(stdout, "(OSU Version 2.2, PathScale $Revision$)\n");
     fprintf(stdout, "# Running on %d procs per node"
             " (%s traffic for each process pair)\n",
             num_pairs,
