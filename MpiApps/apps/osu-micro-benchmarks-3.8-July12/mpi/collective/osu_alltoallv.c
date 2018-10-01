@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     }
 
     sendcounts = (int *) malloc (numprocs*sizeof(int));
-    if(NULL == recvcounts) {
+    if(NULL == sendcounts) {
         fprintf(stderr, "malloc failed.\n");
         exit(1);
     }
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     }
 
     sdispls = (int *) malloc (numprocs*sizeof(int));
-    if(NULL == rdispls) {
+    if(NULL == sdispls) {
         fprintf(stderr, "malloc failed.\n");
         exit(1);
     }

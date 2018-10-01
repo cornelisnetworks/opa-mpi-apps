@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -106,7 +106,8 @@ char** Read_Shared_cmt    = NIL_COMMENT;
 char** Read_Priv_cmt      = NIL_COMMENT;
 char** Read_Expl_cmt      = NIL_COMMENT;
 char** Open_cmt           = NIL_COMMENT;
-
+char** Bi_bandwidth_cmt   = NIL_COMMENT;
+char** Uni_bandwidth_cmt  = NIL_COMMENT;
 
 char *Compare_and_swap_cmt[] = {"Uses MPI_INT data type", NULL};
 

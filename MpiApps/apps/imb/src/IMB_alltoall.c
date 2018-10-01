@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -136,7 +136,7 @@ Output variables:
   int s_num, r_num;
   
 #ifdef CHECK
-defect=0.;
+  defect=0.;
 #endif
   ierr = 0;
 
@@ -144,39 +144,35 @@ defect=0.;
   MPI_Type_size(c_info->s_data_type,&s_size);
   MPI_Type_size(c_info->r_data_type,&r_size);
   if ((s_size!=0) && (r_size!=0))
-    {
+  {
       s_num=size/s_size;
       r_num=size/r_size;
-    } 
-  
+  } 
+ 
+  *time = 0.; 
   if(c_info->rank!=-1)
-    {
-      for(i=0; i<N_BARR; i++) MPI_Barrier(c_info->communicator);
+  {
+      IMB_do_n_barriers (c_info->communicator, N_BARR);
 
-      t1 = MPI_Wtime();
       for(i=0;i< ITERATIONS->n_sample;i++)
-        {
+      {
+          t1 = MPI_Wtime();
           ierr = MPI_Alltoall((char*)c_info->s_buffer+i%ITERATIONS->s_cache_iter*ITERATIONS->s_offs,
                               s_num,c_info->s_data_type,
-			      (char*)c_info->r_buffer+i%ITERATIONS->r_cache_iter*ITERATIONS->r_offs,
-                              r_num,c_info->r_data_type,
-			      c_info->communicator);
+                              (char*)c_info->r_buffer+i%ITERATIONS->r_cache_iter*ITERATIONS->r_offs,
+                              r_num,c_info->r_data_type, c_info->communicator);
           MPI_ERRHAND(ierr);
+          t2 = MPI_Wtime();
+          *time += (t2 - t1);
 
           CHK_DIFF("Alltoall",c_info, (char*)c_info->r_buffer+i%ITERATIONS->r_cache_iter*ITERATIONS->r_offs,
-                   (size_t) c_info->rank* (size_t) size,
-                   0, 
-		   (size_t) c_info->num_procs* (size_t) size, 
-		   1, put, 0, ITERATIONS->n_sample, i,
-                   -2, &defect);
-        }
-      t2 = MPI_Wtime();
-      *time=(t2 - t1)/ITERATIONS->n_sample;
-    }
-  else
-    { 
-      *time = 0.; 
-    }
+                   (size_t) c_info->rank* (size_t) size, 0, (size_t) c_info->num_procs* (size_t) size, 
+                   1, put, 0, ITERATIONS->n_sample, i, -2, &defect);
+
+          IMB_do_n_barriers (c_info->communicator, c_info->sync);
+      }
+      *time /= ITERATIONS->n_sample;
+  }
 }
 
 #elif defined NBC // MPI1
@@ -239,24 +235,25 @@ Output variables:
     /* GET SIZE OF DATA TYPE */
     MPI_Type_size(c_info->s_data_type, &s_size);
     MPI_Type_size(c_info->r_data_type, &r_size);
-    if ((s_size != 0) && (r_size != 0)) {
+    
+    if ((s_size != 0) && (r_size != 0)) 
+    {
         s_num = size / s_size;
         r_num = size / r_size;
     }
 
-    if(c_info->rank != -1) {
+    if(c_info->rank != -1) 
+    {
         IMB_ialltoall_pure(c_info, size, ITERATIONS, RUN_MODE, &t_pure);
 
         /* INITIALIZATION CALL */
         IMB_cpu_exploit(t_pure, 1);
 
-        for(i = 0; i < N_BARR; i++) {
-            MPI_Barrier(c_info->communicator);
-        }
+        IMB_do_n_barriers (c_info->communicator, N_BARR);
 
-        t_ovrlp = MPI_Wtime();
         for(i = 0; i < ITERATIONS->n_sample; i++)
         {
+            t_ovrlp -= MPI_Wtime();
             ierr = MPI_Ialltoall((char*)c_info->s_buffer + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
                                  s_num,
                                  c_info->s_data_type,
@@ -265,19 +262,23 @@ Output variables:
                                  c_info->r_data_type,
                                  c_info->communicator,
                                  &request);
-
             MPI_ERRHAND(ierr);
+            
             t_comp -= MPI_Wtime();
             IMB_cpu_exploit(t_pure, 0);
             t_comp += MPI_Wtime();
+            
             MPI_Wait(&request, &status);
+            t_ovrlp += MPI_Wtime();
+
             CHK_DIFF("Ialltoall", c_info,
                      (char*)c_info->r_buffer + i % ITERATIONS->r_cache_iter * ITERATIONS->r_offs,
                      ((size_t)c_info->rank * (size_t) size), 0, ((size_t)c_info->num_procs * (size_t)size),
                      1, put, 0, ITERATIONS->n_sample, i, -2, &defect);
+            IMB_do_n_barriers (c_info->communicator, c_info->sync);
         }
-        t_ovrlp = (MPI_Wtime() - t_ovrlp) / ITERATIONS->n_sample;
-        t_comp /= ITERATIONS->n_sample;
+        t_ovrlp /= ITERATIONS->n_sample;
+        t_comp  /= ITERATIONS->n_sample;
     }
 
     time[0] = t_pure;
@@ -342,19 +343,20 @@ Output variables:
     /* GET SIZE OF DATA TYPE */
     MPI_Type_size(c_info->s_data_type, &s_size);
     MPI_Type_size(c_info->s_data_type, &r_size);
-    if ((s_size != 0) && (r_size != 0)) {
+    
+    if ((s_size != 0) && (r_size != 0)) 
+    {
         s_num = size / s_size;
         r_num = size / r_size;
     }
 
-    if(c_info->rank != -1) {
-        for (i = 0; i < N_BARR; i++) {
-            MPI_Barrier(c_info->communicator);
-        }
+    if(c_info->rank != -1) 
+    {
+        IMB_do_n_barriers (c_info->communicator, N_BARR);
 
-        t_pure = MPI_Wtime();
         for(i = 0; i < ITERATIONS->n_sample; i++)
         {
+            t_pure -= MPI_Wtime();
             ierr = MPI_Ialltoall((char*)c_info->s_buffer + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
                                  s_num,
                                  c_info->s_data_type,
@@ -365,12 +367,16 @@ Output variables:
                                  &request);
             MPI_ERRHAND(ierr);
             MPI_Wait(&request, &status);
+            t_pure += MPI_Wtime();
+
             CHK_DIFF("Ialltoall_pure", c_info,
                      (char*)c_info->r_buffer + i % ITERATIONS->r_cache_iter * ITERATIONS->r_offs,
                      ((size_t)c_info->rank * (size_t) size), 0, ((size_t)c_info->num_procs * (size_t)size),
                      1, put, 0, ITERATIONS->n_sample, i, -2, &defect);
+            
+            IMB_do_n_barriers (c_info->communicator, c_info->sync);
         }
-        t_pure = (MPI_Wtime() - t_pure) / ITERATIONS->n_sample;
+        t_pure /= ITERATIONS->n_sample;
     }
 
     time[0] = t_pure;

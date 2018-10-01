@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -87,6 +87,8 @@ struct comm_info
 
     int 	num_procs;		/* number of processes in communicator      */
     int 	rank;			/* rank of actual process in communicator   */
+    int     root_shift;     /* switch for root change at each iteration */ 
+    int     sync;           /* switch for rank synchronization after each iter */
 
     MPI_Datatype 	s_data_type;	/* data type of sent data                   */
     MPI_Datatype 	r_data_type;	/* data type of received data               */

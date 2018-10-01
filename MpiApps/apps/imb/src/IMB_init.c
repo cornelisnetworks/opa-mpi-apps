@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -96,6 +96,20 @@ For more documentation than found here, see
 #include "IMB_prototypes.h"
 
 #define MAX_INT_LOG (31)
+
+/*
+void print_array(char *name, int *ptr, int size) 
+{
+    int i;
+    printf("%s: { ", name);
+    for (i = 0; i < size; i++) {
+        printf("%d%s", ptr[i], (i == size-1 ? "" : ", "));
+    }
+    printf(" }\n");
+}
+*/
+
+char *bmark_names_from_input_file[100] = { NULL, };
 
 struct Blist_item
 {
@@ -223,7 +237,32 @@ static IMODE string_to_iter_policy(const char* str)
     return i;
 }
 
-#define N_baseinfo 15
+int static IMB_chk_arg_switch (char *val) 
+{
+    int ret = -1;
+
+    if (val != NULL)
+    {
+        if ( 0 == STRCASECMP(val, "enable") ||
+             0 == STRCASECMP(val, "yes")    ||  
+             0 == STRCASECMP(val, "on")     ||  
+             0 == strcmp(val, "1") )                     
+        {
+            ret = 1;
+        }
+        else if ( 0 == STRCASECMP(val, "disable")   ||  
+                  0 == STRCASECMP(val, "no")        ||  
+                  0 == STRCASECMP(val, "off")       ||  
+                  0 == strcmp(val, "0") )                     
+        {
+            ret = 0;        
+        }
+    }
+    return ret;
+}
+
+
+#define N_baseinfo 18
 /* IMB 3.1 << */
 #define N_base_f_info 3  /* for float data */
 /* >> IMB 3.1  */
@@ -620,15 +659,21 @@ int IMB_basic_input(struct comm_info* c_info, struct Bench** P_BList,
                     if( t )
                     {
                         char inp_line[72], nam[32];
-
+                        char *nam_copy;
                         while(fgets(inp_line,72,t))
                         {
                             if( inp_line[0] != '#' && strlen(inp_line)-1 )
                             {
                                 sscanf(inp_line,"%32s",nam);
+                                nam_copy = bmark_names_from_input_file[n_cases] = strdup(nam);
 
-                                n_cases++;
-                                IMB_add_to_list_tail( nam, &Blist_head, &Blist_tail);
+                                if (++n_cases >= 100) {
+                                    fprintf(unit,"Too many benchmark cases\n");
+                                    fflush(stderr);
+                                    ok=-1;
+                                    break;
+                                }
+                                IMB_add_to_list_tail( nam_copy, &Blist_head, &Blist_tail);
                             }
                         }
                         fclose(t);
@@ -738,6 +783,71 @@ int IMB_basic_input(struct comm_info* c_info, struct Bench** P_BList,
                 }
 #endif
                 /* >> IMB 3.2.3  */
+#if (defined MPI1 || defined NBC )                
+                else if (!strcmp((*argv)[iarg],"-root_shift"))
+                {
+                    int val = -1; 
+                    
+                    if( iarg+1 < *argc )
+                    {    
+                       val = IMB_chk_arg_switch((*argv)[iarg+1]);
+                    }    
+                    
+                    if (val == -1)
+                    {    
+                        fprintf(stderr,"Invalid -root_shift argument \n");
+                        ok = -1;
+                        break;
+                    }
+                    else
+                    { 
+                        c_info->root_shift = val;
+                    }    
+                    iarg++;
+                }
+                else if (!strcmp((*argv)[iarg],"-sync"))
+                {
+                    int val = -1;
+                    
+                    if( iarg+1 < *argc )
+                    {    
+                       val = IMB_chk_arg_switch((*argv)[iarg+1]);
+                    }    
+                    
+                    if (val == -1)
+                    {    
+                        fprintf(stderr,"Invalid -sync argument \n");
+                        ok = -1;
+                        break;
+                    }
+                    else
+                    { 
+                        c_info->sync = val;
+                    }    
+                    iarg++;
+                }
+#endif                 
+                else if (!strcmp((*argv)[iarg],"-imb_barrier"))
+                {
+                    int val = -1;
+
+                    if( iarg+1 < *argc )
+                    {
+                       val = IMB_chk_arg_switch((*argv)[iarg+1]);
+                    }
+
+                    if (val == -1)
+                    {
+                        fprintf(stderr,"Invalid -imb_barrier argument \n");
+                        ok = -1;
+                        break;
+                    }
+                    else
+                    {
+                        IMB_internal_barrier = val;
+                    }
+                    iarg++;
+                }
                 else
                 {
                     /*It must be the name of one of benchmark*/
@@ -839,10 +949,6 @@ int IMB_basic_input(struct comm_info* c_info, struct Bench** P_BList,
                     }
 
                 }
-
-                printf(" benchmarks to run ") ;
-                IMB_print_list(Blist_head);
-                printf("\n") ;
 
                 if( n_cases > 0)
                 {
@@ -975,12 +1081,15 @@ int IMB_basic_input(struct comm_info* c_info, struct Bench** P_BList,
         ALL_INFO[6]  = ITERATIONS->msgs_nonaggr;
         ALL_INFO[7]  = ITERATIONS->iter_policy;
         ALL_INFO[8]  = n_cases;
-        ALL_INFO[9]  = c_info->n_lens;
+        ALL_INFO[9] = c_info->n_lens;
         ALL_INFO[10] = c_info->px;
         ALL_INFO[11] = c_info->py;
         ALL_INFO[12] = c_info->min_msg_log;
         ALL_INFO[13] = c_info->max_msg_log;
-        ALL_INFO[14] = ok;
+        ALL_INFO[14] = c_info->root_shift;
+        ALL_INFO[15] = c_info->sync;
+        ALL_INFO[16] = ok;
+        ALL_INFO[17] = IMB_internal_barrier;
 
         ALL_F_INFO[0] = ITERATIONS->cache_size;
         ALL_F_INFO[1] = ITERATIONS->secs;
@@ -1032,7 +1141,10 @@ int IMB_basic_input(struct comm_info* c_info, struct Bench** P_BList,
         c_info->py                   = TMP[11];
         c_info->min_msg_log          = TMP[12];
         c_info->max_msg_log          = TMP[13];
-        ok                           = TMP[14];
+        c_info->root_shift          = TMP[14];
+        c_info->sync                 = TMP[15];
+        ok                           = TMP[16];
+        IMB_internal_barrier         = TMP[17];
 
         ITERATIONS->cache_size       = ALL_F_INFO[0];
         ITERATIONS->off_cache        = (ITERATIONS->cache_size < 0.) ? 0 : 1;
@@ -1226,85 +1338,93 @@ int IMB_init_communicator(struct comm_info* c_info, int NP)
         c_info -> rank = -1;
     }
 
-    if( c_info->communicator == MPI_COMM_WORLD ) 
+    if( c_info->communicator == MPI_COMM_WORLD )
     {
         c_info->n_groups = 1;
         c_info->g_sizes[0] = c_info->w_num_procs;
 
         for(i=0; i<c_info->w_num_procs; i++) c_info->g_ranks[i]=i;
+        IMB_set_errhand(c_info);
+        return 0;
+    }
+
+    /* Collect global group information */
+    // The idea of this code is to collect the information on:
+    // 1) number of groups, stored in c_info->n_groups variable on rank 0
+    // 2) sizes of those groups, stored in c_info->g_sizes[] on ranks 0
+    // 3) rank numbers in MPI_COMM_WORLD numbering of all ranks in groups
+    // Mostly this info is for output usage
+    if( c_info->rank == 0 )
+    {
+        /* group leaders provide group ranks */
+        MPI_Comm_group(MPI_COMM_WORLD,&w_group);
+        MPI_Comm_group(c_info->communicator,&group);
+
+        for (i=0; i<c_info->num_procs; i++) c_info->g_sizes[i] = i;
+
+        /* TRANSLATION OF RANKS */
+        MPI_Group_translate_ranks( group, c_info->num_procs, 
+                c_info->g_sizes,w_group,
+                c_info->g_ranks );
+        //print_array(">> c_info->g_ranks", c_info->g_ranks, c_info->num_procs);
+        snd = c_info->num_procs;
     }
     else
     {
-        /* Collect global group information */
+        *c_info->g_ranks = -1;
+        snd = 1;
+    }
+
+    /* w_rank 0 collects in g_ranks ranks of single groups */
+    if( c_info->w_rank == 0 ) 
+    {
         if( c_info->rank == 0 )
         {
-            /* group leaders provide group ranks */
-            MPI_Comm_group(MPI_COMM_WORLD,&w_group);
-            MPI_Comm_group(c_info->communicator,&group);
-
-            for (i=0; i<c_info->num_procs; i++) c_info->g_sizes[i] = i;
-
-            /* TRANSLATION OF RANKS */
-            MPI_Group_translate_ranks( group, c_info->num_procs, 
-                    c_info->g_sizes,w_group,
-                    c_info->g_ranks );
-            snd = c_info->num_procs;
+            c_info->n_groups = 1;
+            c_info->g_sizes[0] = c_info->num_procs;
+            aux_ptr = c_info->g_ranks + c_info->g_sizes[0];
         }
         else
         {
-            *c_info->g_ranks = -1;
-            snd = 1;
+            c_info->n_groups = 0;
+            aux_ptr = c_info->g_ranks;
         }
 
-        /* w_rank 0 collects in g_ranks ranks of single groups */
-        if( c_info->w_rank == 0 ) 
+        for( proc=1; proc<c_info->w_num_procs; proc++ )
         {
-            if( c_info->rank == 0 )
+            /* Recv group ranks or -1  */
+            cnt = (int)(c_info->g_ranks+c_info->w_num_procs-aux_ptr);
+            /* July 2002 fix V2.2.1 (wrong logistics), next 23 lines */
+
+            if( cnt <= 0 )
+                /* all leaders have sent, recv dummies (-1) from others! */
             {
-                c_info->n_groups = 1;
-                c_info->g_sizes[c_info->n_groups-1] = c_info->num_procs;
-                aux_ptr = c_info->g_ranks+c_info->num_procs;
+                cnt=1;
+                MPI_Recv(&i,cnt,MPI_INT,proc,1000,MPI_COMM_WORLD,&stat);
             }
             else
             {
-                c_info->n_groups = 0;
-                aux_ptr=c_info->g_ranks;
+
+                MPI_Recv(aux_ptr,cnt,MPI_INT,proc,1000,MPI_COMM_WORLD,&stat);
+
+                //print_array(">> aux_ptr", aux_ptr, cnt);
+
+                if( *aux_ptr >= 0 ) 
+                {
+                    /* Message was from a group leader  */
+                    c_info->n_groups++;
+                    MPI_Get_count(&stat, MPI_INT, &c_info->g_sizes[c_info->n_groups-1]);
+                    aux_ptr += c_info->g_sizes[c_info->n_groups-1];
+                } 
+
             }
-
-            for( proc=1; proc<c_info->w_num_procs; proc++ )
-            {
-                /* Recv group ranks or -1  */
-                cnt = (int)(c_info->g_ranks+c_info->w_num_procs-aux_ptr);
-                /* July 2002 fix V2.2.1 (wrong logistics), next 23 lines */
-
-                if( cnt <= 0 )
-                    /* all leaders have sent, recv dummies (-1) from others! */
-                {
-                    cnt=1;
-                    MPI_Recv(&i,cnt,MPI_INT,proc,1000,MPI_COMM_WORLD,&stat);
-                }
-                else
-                {
-
-                    MPI_Recv(aux_ptr,cnt,MPI_INT,proc,1000,MPI_COMM_WORLD,&stat);
-
-                    if( *aux_ptr >= 0 ) 
-                    {
-                        /* Message was from a group leader  */
-                        c_info->n_groups ++;
-                        MPI_Get_count( &stat, MPI_INT,
-                                &c_info->g_sizes[c_info->n_groups-1]);
-                        aux_ptr += c_info->g_sizes[c_info->n_groups-1];
-                    }
-
-                }
-                /* end fix V2.2.1 */
-            } /*for( proc=1; proc<c_info->w_num_procs; proc++ )*/
-        }
-        else  /* w_rank != 0 */
-        {
-            MPI_Send(c_info->g_ranks,snd,MPI_INT,0,1000,MPI_COMM_WORLD);
-        }
+            /* end fix V2.2.1 */
+        } /*for( proc=1; proc<c_info->w_num_procs; proc++ )*/
+    }
+    else  /* w_rank != 0 */
+    {
+        MPI_Send(c_info->g_ranks,snd,MPI_INT,0,1000,MPI_COMM_WORLD);
+        // print_array(">> c_info->g_ranks", c_info->g_ranks, snd);
     }
     /* End collection of group information */   
 
@@ -1346,8 +1466,8 @@ void IMB_set_communicator(struct comm_info *c_info )
 
 */
 {
-    int color,key,i,j,ii;
-    int* map;
+    int color,key; 
+    int errcode=0;
 
     /* insert choice for communicator here;
 NOTE   :  globally more than one communicator is allowed   
@@ -1359,48 +1479,37 @@ Example: grouping of pairs of processes:
             c_info->communicator != MPI_COMM_SELF &&
             c_info->communicator != MPI_COMM_WORLD)
     {
-        i=MPI_Comm_free(&c_info->communicator);
-        IMB_err_hand(1,i);
+        errcode = MPI_Comm_free(&c_info->communicator);
+        IMB_err_hand(1, errcode);
     }
 
-    IMB_i_alloc( int, map, c_info->w_num_procs, "IMB_init");
-    ii=0;
-
-    if( c_info->px>1 && c_info->py>1 )
-    {
-        for( i=0; i<c_info->px; i++ )
-            for( j=0; j<c_info->py; j++ )
-            {
-                if(i+j*c_info->px<c_info->w_num_procs)
-                    map[i+j*c_info->px] = ii++;
-            }
-    }
-    else
-    {
-        for( i=0; i<c_info->w_num_procs; i++ ) map[i]=i;
+    if (c_info->px == 1 || c_info->py == 1) {
+        key = c_info->w_rank;
+    } else {
+        int prod = c_info->py * c_info->px;
+        key = (c_info->py * c_info->w_rank) % (prod - 1); 
+        if (key == 0) 
+            key = c_info->w_rank;
     }
 
     if(c_info->group_mode >= 0)
     {
-        i=map[c_info->w_rank];
-        color = i/c_info->NP;
+        color = key / c_info->NP;
         c_info->group_no = color;
-        key = i;
-        if(color >= c_info->w_num_procs/c_info->NP) color=MPI_UNDEFINED;
-        MPI_Comm_split(MPI_COMM_WORLD, color, key, &c_info->communicator);
+        if(color >= c_info->w_num_procs/c_info->NP) {
+            color=MPI_UNDEFINED;
+        }
     }
     /* Default choice and Group definition.  */
     else
     {
-        if(map[c_info->w_rank] < c_info->NP) color=0;
-        else color=MPI_UNDEFINED;   
-
         c_info->group_no = 0;
-        key=map[c_info->w_rank];
-        MPI_Comm_split(MPI_COMM_WORLD, color, key, &c_info->communicator); 
+        if (key < c_info->NP) 
+            color = 0;
+        else 
+            color = MPI_UNDEFINED;   
     }
-
-    IMB_v_free((void**)&map);
+    MPI_Comm_split(MPI_COMM_WORLD, color, key, &c_info->communicator);
 }
 
 
@@ -1454,6 +1563,10 @@ int IMB_valid(struct comm_info * c_info, struct Bench* Bmark, int NP)
         skip    = NP >  2;
     }    
 #endif
+    if (Bmark->RUN_MODES[0].type == ParallelTransferMsgRate)
+    {    
+        invalid = NP <= 1;
+    }    
 
     if ( invalid )
     {
@@ -1522,6 +1635,8 @@ void IMB_set_default(struct comm_info* c_info)
     c_info->g_ranks = NULL;
     c_info->reccnt = NULL;
     c_info->rdispl = NULL;
+    c_info->sync = 1;
+    c_info->root_shift = 0; 
 
     /* IMB 3.2.3 << */
     c_info->max_msg_log = MAXMSGLOG;

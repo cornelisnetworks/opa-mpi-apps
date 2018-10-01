@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -133,22 +133,22 @@ Output variables:
   ierr = 0;
 
   if(c_info->rank!=-1)
-    {
-      for(i=0; i<N_BARR; i++) MPI_Barrier(c_info->communicator);
+  {
+      IMB_do_n_barriers (c_info->communicator, N_BARR);
 
       t1 = MPI_Wtime();
       for(i=0;i< ITERATIONS->n_sample;i++)
-	{
-	  ierr= MPI_Barrier(c_info->communicator);
-	  MPI_ERRHAND(ierr);
-	}
+      {
+          ierr= MPI_Barrier(c_info->communicator);
+          MPI_ERRHAND(ierr);
+      }
       t2 = MPI_Wtime();
       *time=(t2 - t1)/(ITERATIONS->n_sample);
-    }
+  }
   else
-    { 
+  { 
       *time = 0.; 
-    }
+  }
 }
 
 #elif defined NBC // MPI1
@@ -179,9 +179,7 @@ void IMB_ibarrier(struct comm_info* c_info,
         /* INITIALIZATION CALL */
         IMB_cpu_exploit(t_pure, 1);
 
-        for(i=0; i < N_BARR; i++) {
-            MPI_Barrier(c_info->communicator);
-        }
+        IMB_do_n_barriers (c_info->communicator, N_BARR);
 
         t_ovrlp = MPI_Wtime();
         for(i=0; i < ITERATIONS->n_sample; i++) {
@@ -222,9 +220,7 @@ void IMB_ibarrier_pure(struct comm_info* c_info,
     ierr = 0;
 
     if(c_info->rank != -1) {
-        for (i = 0; i < N_BARR; i++) {
-            MPI_Barrier(c_info->communicator);
-        }
+        IMB_do_n_barriers (c_info->communicator, N_BARR);
 
         t_pure = MPI_Wtime();
         for(i = 0; i < ITERATIONS->n_sample; i++) {

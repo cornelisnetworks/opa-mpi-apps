@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -234,7 +234,7 @@ extern int    do_nonblocking;
 extern double tCPU;    /* CPU time for overlap benchmarks */
 extern double MFlops;
 
-
+extern int IMB_internal_barrier;
 
 #define TOL 1.e-2
 
@@ -245,6 +245,20 @@ extern double MFlops;
     	    IMB_Assert(Len>0); \
 	    (B) = (type*) IMB_v_alloc(sizeof(type)*(Len), where); \
 	}
+
+#define IMB_do_n_barriers(comm, iter)       \
+    {                                       \
+        int _ii;                            \
+        for (_ii = 0; _ii < iter; ++_ii)    \
+        {                                   \
+            if (IMB_internal_barrier)       \
+            {                               \
+                IMB_Barrier(comm);          \
+            } else {                        \
+                MPI_Barrier(comm);          \
+            }                               \
+        }                                   \
+    }                                       \
 
 #ifdef WIN_IMB
 #define IMB_strcasecmp(s1, s2)	stricmp( (s1), (s2))

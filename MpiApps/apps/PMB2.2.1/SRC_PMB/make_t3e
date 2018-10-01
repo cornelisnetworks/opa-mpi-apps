@@ -1,7 +1,0 @@
-MPI_HOME    = /usr/local/mpi
-MPI_INCLUDE = $(MPI_HOME)
-LIBS        = -lmpi -lm
-LIB_PATH    =
-CC          = cc 
-CLINKER     = cc 
-CPPFLAGS    = -DnoCHECK

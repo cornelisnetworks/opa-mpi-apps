@@ -1,8 +1,0 @@
-MPI_HOME    = /usr
-MPI_INCLUDE = $(MPI_HOME)/include
-LIBS        = -hfloat0 -lmpi -lm -lpthread
-CC          = cc 
-CLINKER     = cc 
-OPTFLAGS    = -hfloat0 -hvector -h1 -pvctl,nomsg
-CPPFLAGS    = -DnoCHECK
-

@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -74,6 +74,7 @@ typedef enum
     BTYPE_INVALID=-1,
     SingleTransfer,
     ParallelTransfer,
+    ParallelTransferMsgRate,
     Collective,
     Sync,
     MultPassiveTransfer,
@@ -105,7 +106,7 @@ struct iter_schedule
     /* evtl override for default parameters MSGSPERSAMPLE, MSGS_NONAGGR, OVERALL_VOL */
 
     int     n_sample, n_sample_prev;
-
+    
     /* dynamic adaptation eventually */
     IMODE   iter_policy;   /* enum for request */
     int*    numiters;      /* #iterations in case of -msglen request */

@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -131,7 +131,7 @@ Output variables:
 */
 {
     double t1, t2;
-    int    i,i1;
+    int    i;
     Type_Size s_size;
     int s_num;
     void* bc_buf;
@@ -145,36 +145,37 @@ Output variables:
     MPI_Type_size(c_info->s_data_type,&s_size);
     if (s_size!=0) s_num=size/s_size;
 
+    *time = 0.;
 
     if(c_info->rank!=-1)
     {
-        i1=0;
-        for(i=0; i<N_BARR; i++) MPI_Barrier(c_info->communicator);
+        int root = 0;
+        IMB_do_n_barriers (c_info->communicator, N_BARR);
 
-
-        t1 = MPI_Wtime();
         for(i=0;i< ITERATIONS->n_sample;i++)
         {
             /* Provide that s_buffer is not overwritten */
-            bc_buf = (i1 == c_info->rank) ? c_info->s_buffer : c_info->r_buffer;
+            bc_buf = (root == c_info->rank) ? c_info->s_buffer : c_info->r_buffer;
+
+            t1 = MPI_Wtime();
             ierr= MPI_Bcast((char*)bc_buf+i%ITERATIONS->s_cache_iter*ITERATIONS->s_offs,
                             s_num,c_info->s_data_type,
-                            i1,c_info->communicator);
+                            root,c_info->communicator);
+            t2 = MPI_Wtime();
+            *time += (t2 - t1);
+
             MPI_ERRHAND(ierr);
 
             CHK_DIFF("Bcast", c_info,
                      (char*)bc_buf + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
-                     0, size, size, 1, put, 0, ITERATIONS->n_sample, i, i1, &defect);
+                     0, size, size, 1, put, 0, ITERATIONS->n_sample, i, root, &defect);
 
             /*  CHANGE THE ROOT NODE */
-            i1=(++i1)%c_info->num_procs;
+            root = (root + c_info->root_shift) % c_info->num_procs;
+
+            IMB_do_n_barriers (c_info->communicator, c_info->sync);
         }
-        t2 = MPI_Wtime();
-        *time=(t2 - t1)/(ITERATIONS->n_sample);
-    }
-    else
-    {
-        *time = 0.;
+        *time /= ITERATIONS->n_sample;
     }
 }
 
@@ -249,35 +250,40 @@ Output variables:
         IMB_cpu_exploit(t_pure, 1);
         root = 0;
 
-        for(i=0; i<N_BARR; i++) {
-            MPI_Barrier(c_info->communicator);
-        }
+        IMB_do_n_barriers(c_info->communicator, N_BARR);
 
-        t_ovrlp = MPI_Wtime();
         for(i=0; i < ITERATIONS->n_sample; i++)
         {
             bc_buf = (root == c_info->rank)
                    ? c_info->s_buffer
                    : c_info->r_buffer;
+
+            t_ovrlp -= MPI_Wtime();
             ierr = MPI_Ibcast((char*)bc_buf + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
-                              s_num,
-                              c_info->s_data_type,
-                              root,
-                              c_info->communicator,
-                              &request);
+                               s_num,
+                               c_info->s_data_type,
+                               root,
+                               c_info->communicator,
+                               &request);
             MPI_ERRHAND(ierr);
+
             t_comp -= MPI_Wtime();
             IMB_cpu_exploit(t_pure, 0);
             t_comp += MPI_Wtime();
+
             MPI_Wait(&request, &status);
+            t_ovrlp += MPI_Wtime();
+
             CHK_DIFF("Ibcast", c_info,
                      (char*)bc_buf + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
                      0, size, size, 1, put, 0, ITERATIONS->n_sample, i, root, &defect);
             /* CHANGE THE ROOT NODE */
-            root = (++root) % c_info->num_procs;
+            root = (root + c_info->root_shift) % c_info->num_procs;
+            IMB_do_n_barriers(c_info->communicator, c_info->sync);
         }
-        t_ovrlp = (MPI_Wtime() - t_ovrlp) / ITERATIONS->n_sample;
-        t_comp /= ITERATIONS->n_sample;
+
+        t_comp  /= ITERATIONS->n_sample;
+        t_ovrlp /= ITERATIONS->n_sample;
     }
 
     time[0] = t_pure;
@@ -347,34 +353,38 @@ Output variables:
 
     if(c_info->rank != -1) {
         root = 0;
-        for (i = 0; i < N_BARR; i++) {
-            MPI_Barrier(c_info->communicator);
-        }
 
-        t_pure = MPI_Wtime();
+        IMB_do_n_barriers(c_info->communicator, N_BARR);
+
         for(i = 0; i < ITERATIONS->n_sample; i++)
         {
             bc_buf = (root == c_info->rank)
                    ? c_info->s_buffer
                    : c_info->r_buffer;
 
-            ierr = MPI_Ibcast((char*)bc_buf + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
-                              s_num,
-                              c_info->s_data_type,
-                              root,
-                              c_info->communicator,
-                              &request);
-            MPI_ERRHAND(ierr);
-            MPI_Wait(&request, &status);
+            t_pure -= MPI_Wtime();
+                ierr = MPI_Ibcast((char*)bc_buf + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
+                                  s_num,
+                                  c_info->s_data_type,
+                                  root,
+                                  c_info->communicator,
+                                  &request);
+                MPI_ERRHAND(ierr);
+                MPI_Wait(&request, &status);
+            t_pure += MPI_Wtime();
+
             CHK_DIFF("Ibcast_pure", c_info,
                      (char*)bc_buf + i % ITERATIONS->s_cache_iter * ITERATIONS->s_offs,
                      0, size, size, 1, put, 0, ITERATIONS->n_sample, i, root, &defect);
-            root = (++root) % c_info->num_procs;
+            
+            root = (root + c_info->root_shift) % c_info->num_procs;
+            IMB_do_n_barriers(c_info->communicator, c_info->sync);
         }
-        t_pure = (MPI_Wtime() - t_pure) / ITERATIONS->n_sample;
+        t_pure /= ITERATIONS->n_sample;
     }
 
     time[0] = t_pure;
 }
 
 #endif // MPI1 or NBC
+

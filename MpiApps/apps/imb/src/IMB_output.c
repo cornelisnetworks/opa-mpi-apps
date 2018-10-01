@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -90,7 +90,10 @@ enum output_format
 {
     /* print msg size, number of iterations, time and bandwidth */
     OUT_TIME_AND_BW,
-    
+
+    /* print msg size, number of iterations, bandwidth and msg rate */
+    OUT_BW_AND_MSG_RATE,
+
     /* print msg size, number of iterations, 
      * min, max and avrg times (among all ranks) and bandwidth */
     OUT_TIME_RANGE_AND_BW,     
@@ -218,14 +221,18 @@ Input variables:
         } 
         else if ( (type == SingleTransfer && c_info->group_mode != 0) || 
                    type == MultPassiveTransfer || 
-                   type == SingleElementTransfer ) 
+                   (type == SingleElementTransfer && c_info->group_mode != 0) ) 
         {
             out_format = OUT_TIME_AND_BW;
         } 
-        else if ( type == ParallelTransfer || type == SingleTransfer ) 
+        else if ( type == ParallelTransfer || type == SingleTransfer || type == SingleElementTransfer) 
         {
             out_format = OUT_TIME_RANGE_AND_BW;
         } 
+        else if ( type == ParallelTransferMsgRate ) 
+        {
+            out_format = OUT_BW_AND_MSG_RATE;
+        }
         else if (type == Collective ) 
         {
 #ifdef MPIIO
@@ -303,14 +310,15 @@ void IMB_display_times(struct Bench* Bmark, double* tlist, struct comm_info* c_i
 
 */
 {
-    int i, offset = 0;
-    static double MEGA = 1.0/1048576.0;
+    int i, offset = 0, peers;
+    static double MEGA = 1.0/1e6;
 
     double throughput = 0.;
     double overlap    = 0.;
     double t_pure     = 0.;
     double t_ovrlp    = 0.;
     double t_comp     = 0.; 
+    double msgrate = 0;
 
     Timing timing[MAX_TIME_ID]; // min, max and avg
 #ifdef CHECK
@@ -363,7 +371,16 @@ void IMB_display_times(struct Bench* Bmark, double* tlist, struct comm_info* c_i
 
     if (timing[MAX].times[PURE] > 0.) 
     {
-        throughput = (Bmark->scale_bw * SCALE * MEGA) * size / timing[MAX].times[PURE];
+        if (Bmark->RUN_MODES[0].type != ParallelTransferMsgRate)
+            throughput = (Bmark->scale_bw * SCALE * MEGA) * size / timing[MAX].times[PURE];
+#ifndef MPIIO
+        else
+        {
+            peers = c_info->num_procs / 2;
+            msgrate = (Bmark->scale_bw * SCALE * MAX_WIN_SIZE * peers) / timing[MAX].times[PURE];
+            throughput = MEGA * msgrate * size;
+        }
+#endif
     }
     if (c_info->group_mode > 0) 
     {
@@ -389,8 +406,10 @@ void IMB_display_times(struct Bench* Bmark, double* tlist, struct comm_info* c_i
           case SAMPLE_FAILED_INT_OVERFLOW:
             sprintf(aux_string + offset," int-overflow.; The production rank*size caused int overflow for given sample");
             break;
-        case SAMPLE_FAILED_TIME_OUT:
-            sprintf(aux_string + offset," time-out.; Time limit (secs_per_sample * msg_sizes_list_len) is over; use \"-time X\" or SECS_PER_SAMPLE=X (IMB_settings.h) to increase time limit.");
+          case SAMPLE_FAILED_TIME_OUT:
+            aux_string[offset] = '\0';
+            fprintf(unit, "%s%s", aux_string, " time-out.; Time limit (secs_per_sample * msg_sizes_list_len) is over; use \"-time X\" or SECS_PER_SAMPLE=X (IMB_settings.h) to increase time limit.");
+            aux_string[0] = '\0';
             break;
         } /*switch*/
     } 
@@ -401,6 +420,12 @@ void IMB_display_times(struct Bench* Bmark, double* tlist, struct comm_info* c_i
         case OUT_TIME_AND_BW:
             IMB_edit_format(2, 2);
             sprintf(aux_string + offset, format, size, n_sample, timing[MAX].times[PURE], throughput);
+            break;
+        case OUT_BW_AND_MSG_RATE:
+            IMB_edit_format(2, 1);
+            offset += sprintf(aux_string + offset, format, size, n_sample, throughput);
+            sprintf(&(format[0]),"%%%d.0f",ow_format);
+            sprintf(aux_string + offset, format, msgrate);
             break;
         case OUT_TIME_RANGE_AND_BW:    
             IMB_edit_format(2, 4);
@@ -526,7 +551,11 @@ void IMB_calculate_times(int ntimes,
 	    }
 #endif 
         }
-        timing[AVG].times[time_id] /= times_count;
+        // fixed 'times_count may be 0' issue
+        if (times_count != 0)
+            timing[AVG].times[time_id] /= times_count;
+        else
+            timing[AVG].times[time_id] = 0;
     }
 }
 
@@ -946,6 +975,11 @@ void IMB_print_header (int out_format, struct Bench* bmark,
         strcat(aux_string,"&#bytes&#repetitions&t[usec]&Mbytes/sec&");
         break;
 
+    case OUT_BW_AND_MSG_RATE:
+        line_len += 4;
+        strcat(aux_string,"&#bytes&#repetitions&Mbytes/sec&Msg/sec&");
+        break;
+
     case OUT_TIME_RANGE_AND_BW:
         line_len += 6;
         strcat(aux_string,
@@ -1122,19 +1156,24 @@ void IMB_help()
     /* >> IMB 3.1  */
     fprintf(unit,
             "[-npmin        <NPmin>]\n"
-            "[-multi        <MultiMode>]\n"
+            "[-multi        <outflag>]\n"
             "[-off_cache    <cache_size[,cache_line_size]>\n"
             "[-iter         <msgspersample[,overall_vol[,msgs_nonaggr[,iter_policy]]]>\n"
-            "[-iter_policy  <iter_policy>\n"
+            "[-iter_policy  <iter_policy>]\n"
             "[-time         <max_runtime per sample>]\n"
             "[-mem          <max. per process memory for overall message buffers>]\n"
             "[-msglen       <Lengths_file>]\n"
             "[-map          <PxQ>]\n"
             "[-input        <filename>]\n"
-            "[benchmark1    [,benchmark2 [,...]]]\n"
-            "[-include      [benchmark1 [,benchmark2 [,...]]]\n"
-            "[-exclude      [benchmark1 [,benchmark2 [,...]]]\n"
-            "[-msglog       <[min_msglog]:max_msglog>\n"
+            "[benchmark1    [benchmark2 [...]]]\n"
+            "[-include      [benchmark1 [benchmark2 [...]]]\n"
+            "[-exclude      [benchmark1 [benchmark2 [...]]]\n"
+            "[-msglog       <[min_msglog]:max_msglog>]\n"
+#if (defined MPI1 || defined NBC)
+            "[-root_shift   <on or off>]\n"
+            "[-sync         <on or off>]\n"
+#endif            
+            "[-imb_barrier  <on or off>]\n"
             "\n"
             "where \n"
             "\n"
@@ -1269,12 +1308,12 @@ void IMB_help()
             "Q=1\n"
             "\n"
             "- multi\n\n"
-            "the argument after -multi is MultiMode (0 or 1)\n"
+            "the argument after -multi is outflag (0 or 1)\n"
             "\n"
             "if -multi is selected, running the N process version of a benchmark\n"
             "on NP overall, means running on (NP/N) simultaneous groups of N each.\n"
             "\n"
-            "MultiMode only controls default (0) or extensive (1) output charts.\n"
+            "outflag only controls default (0) or extensive (1) output charts.\n"
             "0: only lowest performance groups is output\n"
             "1: all groups are output\n"
             "\n"
@@ -1307,17 +1346,38 @@ void IMB_help()
             "where min is power of 2 so that second smallest data transfer size is max(unit,2^min)\n"
             "(the smallest always being 0), where unit = sizeof(float) for reductions, unit = 1 else\n"
             "max is power of 2 so that 2^max is largest messages size, max must be less than 31"
+            "\n\n"
+#if (defined MPI1 || defined NBC)
+            "-root_shift\n\n"
+            "controls root change at each iteration step for certain collective benchmarks,\n"
+            "possible argument values are on (1|enable|yes) or off (0|disable|no)\n"
+            "default:\n"
+            "off\n"
             "\n"
+            "-sync\n\n"
+            "controls whether all processes are syncronized at each iteration step in collective benchmarks,\n"
+            "possible argument values are on (1|enable|yes) or off (0|disable|no)\n"
+            "default:\n"
+            "on\n"
+            "\n"
+            "\n"
+#endif            
+            "-imb_barrier\n\n"
+            "use internal MPI-independent barrier syncronization implementation,\n"
+            "possible argument values are on (1|enable|yes) or off (0|disable|no)\n"
+            "default:\n"
+            "off\n"
             "\n"
             "- benchmarkX is (in arbitrary lower/upper case spelling)\n"
             "\n");
 #ifdef MPI1
     fprintf(unit,
             "PingPongSpecificSource\n"
+            "PingPongAnySource\n"
             "PingPingSpecificSource\n"
+            "PingPingAnySource\n"
             "PingPing\n"
             "PingPong\n"
-            "PingPing\n"
             "Sendrecv\n"
             "Exchange\n"
             "Bcast\n"
@@ -1333,6 +1393,8 @@ void IMB_help()
             "Reduce_scatter\n"
             "Allreduce\n"
             "Barrier\n"
+            "Uniband\n"
+            "Biband\n"
             "\n");
 
 #elif defined(EXT)

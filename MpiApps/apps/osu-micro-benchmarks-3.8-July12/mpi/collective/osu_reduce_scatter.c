@@ -96,6 +96,11 @@ int main(int argc, char *argv[])
      
 
     recvcounts = (int *)malloc( numprocs * sizeof(int) );
+    if(recvcounts == NULL){
+         fprintf(stderr,"Malloc Failure\n");
+         return EXIT_FAILURE;
+    }
+
 
     for(size=1; size*sizeof(float)<= max_msg_size; size *= 2) {
 

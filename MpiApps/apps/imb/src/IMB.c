@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -120,6 +120,7 @@ Return value          (type int)
     int	size;             
     int	MAXMSG;
     int	x_sample,n_sample;            
+    int ci_np; /* number of procs adjusted in case of ParallelTransferMsgRate benchmark */
     /* IMB 3.1 << */
     struct iter_schedule ITERATIONS;
     int 	mem_ok;
@@ -164,14 +165,20 @@ Return value          (type int)
     {
 	Bmark = BList+j;
 
+    ci_np = C_INFO.w_num_procs;
+    if( Bmark->RUN_MODES[0].type == ParallelTransferMsgRate )
+    {
+        ci_np -= ci_np % 2;
+        NP_min += NP_min % 2;
+    }
 	if( Bmark->RUN_MODES[0].type != BTYPE_INVALID )
 	{
+	    NP=max(1,min(ci_np,NP_min));
 
-	    NP=max(1,min(C_INFO.w_num_procs,NP_min));
-	    if( Bmark->RUN_MODES[0].type == SingleTransfer ) 
+	    if( Bmark->RUN_MODES[0].type == SingleTransfer || Bmark->RUN_MODES[0].type == SingleElementTransfer) 
 	    {
 #ifndef MPIIO
-		NP = (min(2,C_INFO.w_num_procs));
+		NP = (min(2,ci_np));
 #else
 		NP = 1;
 #endif
@@ -286,12 +293,12 @@ Return value          (type int)
                     if (C_INFO.rank >= 0) {
                         time_limit[1] = (MPI_Wtime() - sample_time < max(max(C_INFO.n_lens, C_INFO.max_msg_log - C_INFO.min_msg_log) - 1, 1)*ITERATIONS.secs) ? 0 : 1;
                     }
+                }
 
-                    MPI_Allreduce(&time_limit[1], &time_limit[0], 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+                MPI_Allreduce(&time_limit[1], &time_limit[0], 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
-                    if (time_limit[0]) {
-                        Bmark->sample_failure = SAMPLE_FAILED_TIME_OUT;
-                    }
+                if (time_limit[0]) {
+                    Bmark->sample_failure = SAMPLE_FAILED_TIME_OUT;
                 }
 
                 if( !Bmark->sample_failure ) {
@@ -332,10 +339,10 @@ Return value          (type int)
         } /*if ( IMB_valid(&C_INFO,Bmark,NP) )*/
 
 		/* CALCULATE THE NUMBER OF PROCESSES FOR NEXT STEP */
-		if( NP == C_INFO.w_num_procs  ) {do_it=0;}
-		else
+		if( NP >= ci_np  ) {do_it=0;}
+        else
 		{
-		    NP=min(NP+NP,C_INFO.w_num_procs);
+		    NP=min(NP+NP,ci_np);
 		}	  
 
 #ifdef MPIIO

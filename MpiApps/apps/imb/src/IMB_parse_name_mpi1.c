@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -179,6 +179,7 @@ In/out variables:
     { 
           strcpy(Bmark->name,"PingPong");
           Bmark->Benchmark	= IMB_pingpong;
+          Bmark->select_source	= 1;
           Bmark->bench_comments = &PingPong_cmt[0];
           type 			= SingleTransfer;
           Bmark->scale_time 	= 0.5;
@@ -187,9 +188,18 @@ In/out variables:
     { 
 	strcpy(Bmark->name,"PingPing");
 	Bmark->Benchmark 	= IMB_pingping;
+	Bmark->select_source 	= 1;
 	Bmark->bench_comments 	= &PingPing_cmt[0];
 	type 			= SingleTransfer;
-    } 
+    }
+    else if (!strcmp(Bmark->name,"pingponganysource"))
+    {
+	strcpy(Bmark->name,"PingPongAnySource");
+	Bmark->Benchmark 	= IMB_pingpong;
+	Bmark->bench_comments 	= &PingPong_cmt[0];
+	type 			= SingleTransfer;
+	Bmark->scale_time 	= 0.5;
+    }
     else if (!strcmp(Bmark->name,"pingpongspecificsource"))
     {
 	strcpy(Bmark->name,"PingPongSpecificSource");
@@ -198,6 +208,13 @@ In/out variables:
 	Bmark->bench_comments 	= &PingPong_cmt[0];
 	type 			= SingleTransfer;
 	Bmark->scale_time 	= 0.5;
+    }
+    else if (!strcmp(Bmark->name,"pingpinganysource"))
+    {
+	strcpy(Bmark->name,"PingPingAnySource");
+	Bmark->Benchmark 	= IMB_pingping;
+	Bmark->bench_comments 	= &PingPing_cmt[0];
+	type 			= SingleTransfer;
     }
     else if (!strcmp(Bmark->name,"pingpingspecificsource"))
     {
@@ -318,6 +335,24 @@ In/out variables:
 	Bmark->Benchmark = IMB_alltoallv;
 	type = Collective;
 	Bmark->bench_comments = &Alltoallv_cmt[0];
+    }
+    else if (!strcmp(Bmark->name,"uniband"))
+    { 
+	strcpy(Bmark->name,"Uniband");
+	Bmark->Benchmark = IMB_uni_bandwidth;
+	Bmark->bench_comments = &Uni_bandwidth_cmt[0];
+	type = ParallelTransferMsgRate;
+	Bmark->scale_time = 1.0;
+	Bmark->scale_bw   = 1.0;
+    }
+    else if (!strcmp(Bmark->name,"biband"))
+    { 
+	strcpy(Bmark->name,"Biband");
+	Bmark->Benchmark = IMB_bi_bandwidth;
+	Bmark->bench_comments = &Bi_bandwidth_cmt[0];
+	type = ParallelTransferMsgRate;
+	Bmark->scale_time = 1.0;
+	Bmark->scale_bw   = 2.0;
     }
     else 
     {

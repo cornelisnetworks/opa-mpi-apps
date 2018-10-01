@@ -186,6 +186,10 @@ int main(int argc, char *argv[])
        }
 
        bandwidth_results = (double **) malloc(sizeof(double *) * log_val);
+       if(bandwidth_results == NULL){
+           fprintf(stderr,"Malloc Failure\n");
+           return EXIT_FAILURE;
+       }
 
        for(i = 0; i < log_val; i++) {
            bandwidth_results[i] = (double *)malloc(sizeof(double) *

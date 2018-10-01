@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -322,7 +322,7 @@ void IMB_rma_get_local (struct comm_info* c_info, int size,
     {
          /* Local completion of MPI_Get guarantees that recv buffer already contains target data,
           * so let's check the result */
-         for(i = 0; ITER_MIN(iterations); i++)
+         for(i = 0; i < ITER_MIN(iterations); i++)
          {
              CHK_DIFF("MPI_Get",c_info, (void*)(recv+i%iterations->r_cache_iter*iterations->r_offs), 
                       0, size, size, asize, get, 0, iterations->n_sample, i, c_info->pair1, &defect);

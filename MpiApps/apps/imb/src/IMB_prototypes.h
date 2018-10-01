@@ -3,7 +3,7 @@
 
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -108,6 +108,11 @@ void IMB_reduce_scatter(struct comm_info* c_info, int size, struct iter_schedule
 void IMB_sendrecv(struct comm_info* c_info, int size, struct iter_schedule* ITERATIONS, 
                   MODES RUN_MODE, double* time);
 
+void IMB_uni_bandwidth(struct comm_info* c_info, int size,  struct iter_schedule* ITERATIONS,
+              MODES RUN_MODE, double* time);
+
+void IMB_bi_bandwidth(struct comm_info* c_info, int size,  struct iter_schedule* ITERATIONS,
+              MODES RUN_MODE, double* time);
 #endif // MPI1
 
 /* MPI-2 onesided communications benchmarks */

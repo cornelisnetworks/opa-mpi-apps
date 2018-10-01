@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -88,7 +88,9 @@ char *DEFC[] = {
 /* NAMES OF BENCHMARKS (ALL CASE)*/
 char *ALLC[] = {
    "PingPongSpecificSource"
+  ,"PingPongAnySource"
   ,"PingPingSpecificSource"
+  ,"PingPingAnySource"
   ,"PingPong" 
   ,"PingPing" 
   ,"Sendrecv"
@@ -106,5 +108,7 @@ char *ALLC[] = {
   ,"Alltoallv"
   ,"Bcast" 
   ,"Barrier" 
+  ,"Uniband" 
+  ,"Biband" 
 };
 

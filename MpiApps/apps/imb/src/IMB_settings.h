@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright (c) 2003-2015 Intel Corporation.                                *
+ * Copyright (c) 2003-2016 Intel Corporation.                                *
  * All rights reserved.                                                      *
  *                                                                           *
  *****************************************************************************
@@ -169,5 +169,7 @@ typedef float assign_type ;
 
 #endif
 
+/* maximum window size of messages*/
+#define MAX_WIN_SIZE 64 
 
 #endif
