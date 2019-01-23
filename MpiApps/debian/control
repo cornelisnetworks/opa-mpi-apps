@@ -1,0 +1,14 @@
+Source: opa-mpi-apps
+Maintainer: Breyer, Scott J <scott.j.breyer@intel.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.8
+Build-Depends: debhelper (>= 9)
+
+Package: opa-mpi-apps
+Priority: optional
+Architecture: linux-any
+Depends: ${misc:Depends}
+Description: Intel MPI benchmarks and Applications used by opa-fast-fabric
+ Contains applications and source for testing MPI performance in
+ conjunction with opa-fastfabric or stand alone.

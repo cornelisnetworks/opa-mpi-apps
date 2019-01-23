@@ -1,6 +1,6 @@
 Name: opa-mpi-apps
-Version: 10.8.0.0
-Release: 201%{?dist}
+Version: 10.9.0.0
+Release: 204%{?dist}
 Summary: Intel MPI benchmarks and Applications used by opa-fast-fabric
 Group: System Environment/Libraries
 License: GPLv2/BSD
@@ -14,7 +14,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
 Contains applications and source for testing MPI performance in conjunction with opa-fastfabric or stand alone.
-IFSComponent: Tools_FF 10.8.0.0.201%{?dist}
+IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
 
 %prep
 %setup -q -c
