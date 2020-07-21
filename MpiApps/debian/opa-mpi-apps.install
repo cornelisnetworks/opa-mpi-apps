@@ -1,7 +1,7 @@
 /usr/src/opa/mpi_apps/bandwidth
 /usr/src/opa/mpi_apps/latency
 /usr/src/opa/mpi_apps/osu2
-/usr/src/opa/mpi_apps/hpl-2.2
+/usr/src/opa/mpi_apps/hpl-2.3
 /usr/src/opa/mpi_apps/imb
 /usr/src/opa/mpi_apps/PMB2.2.1
 /usr/src/opa/mpi_apps/osu-micro-benchmarks-3.8-July12

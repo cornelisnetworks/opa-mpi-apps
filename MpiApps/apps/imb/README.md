@@ -1,6 +1,6 @@
 # Intel(R) MPI Benchmarks
 [![Common Public License Version 1.0](https://img.shields.io/badge/license-Common%20Public%20License%20Version%201.0-green.svg)](license/license.txt)
-![v2018](https://img.shields.io/badge/v.2018-Gold-orange.svg)
+![v2019.1](https://img.shields.io/badge/v.2019.1-Update-orange.svg)
 --------------------------------------------------
 
 --------
@@ -25,7 +25,8 @@ You can run all of the supported benchmarks, or a subset specified in the
 command line using one executable file. Use command-line parameters to specify
 various settings, such as time measurement, message lengths, and selection of 
 communicators. For details, see the Intel(R) MPI Benchmarks User's Guide 
-located in the <install-dir>/doc directory.
+located at:
+https://software.intel.com/en-us/imb-user-guide.
 
 By default, Intel(R) MPI Benchmarks is installed at:
   - C:\Program Files (x86)\IntelSWTools\imb on Windows* OS 
@@ -42,6 +43,8 @@ files and folders appear on your system:
 
     +-- \imb            Intel(R) MPI Benchmarks product directory
          |
+         +-- \src_c             Product source "C" code and Makefiles.
+         |
          +-- \license           Product license files.
          |    |              
          |    +--license.txt    Source code license granted to you.
@@ -50,7 +53,7 @@ files and folders appear on your system:
          |                                       use of the Intel(R) MPI 
          |                                       Benchmarks name and trademark.
          |
-         +-- \src                  Product source code and Makefiles. 
+         +-- \src_cpp              Product source "CPP" code and Makefiles. 
          |
          +-- \WINDOWS              Microsoft* Visual Studio* project files. 
          |
@@ -60,9 +63,72 @@ files and folders appear on your system:
 ----------
 What's New
 ----------
+New in Intel(R) MPI Benchmarks 2019 Update 6
+--------------------------------------------
+- New IMB-P2P Stencil2D and Stencil3D benchmarks.
+- Bug fixes.
+
+New in Intel(R) MPI Benchmarks 2019 Update 5
+----------------------------------------
+- Added Visual Studio projects for IMB-P2P
+- Bug fixes.
+
+New in Intel(R) MPI Benchmarks 2019 Update 4
+--------------------------------------------
+- Bug fixes.
+
+New in Intel(R) MPI Benchmarks 2019 Update 3
+----------------------------------------
+- Added the warm_up option that enabled additional cycles before running benchmark(for all size.)
+- Added a new benchmark Reduce_local for IMB-MPI1.
+- Bug fixes.
+
+New in Intel(R) MPI Benchmarks 2019 Update 2
+----------------------------------------
+- New IMB-P2P benchmarks.
+- Added the Reduce_local benchmark for IMB-MPI1.
+- Deleted the alignment option (-alignment).
+- Bug fixes.
+- Code cleanup.
+
+New in Intel(R) MPI Benchmarks 2019 Update 1
+----------------------------------------
+- Added the Reduce_scatter_block benchmark for IMB-MPI1.
+- Added the aggregate_mode option that specifies the mode for IMB-IO, IMB-EXT and IMB-RMA.
+- Added the alignment option that controls buffer alignment.
+- Updated the following options:
+    - -data_type now supports double.
+    - -red_data_type now supports double.
+
+New in Intel(R) MPI Benchmarks 2019
+----------------------------------------
+- New IMB-MT benchmarks.
+  The benchmarks implement the multi-threaded version of IMB-MPI1 benchmarks 
+  using the OpenMP* paradigm.
+- New benchmarks infrastructure for easier benchmarks extension is 
+  implemented in C++ (See the guide: 
+  https://software.intel.com/en-us/articles/creating-custom-benchmarks-for-imb-2019).
+  The IMB-MPI1, IMB-RMA, IMB-NBC, IMB-EXT, IMB-IO, and IMB-MT implementation 
+  is now based on the new C++ infrastructure. The legacy infrastructure is 
+  preserved in the src_c subdirectory.
+- Syntax changes for the -include and -exclude options.
+  Benchmarks to include and exclude now must be separated by a comma rather
+  than a space. Benchmarks to launch can be separated by a comma or a space.
+- Iteration policy can no longer be set with the -iter option. Use the 
+  -iter_policy instead.
+- Added a new benchmark BarrierMT for IMB-MT.
+- Added new options:
+    - -noheader for IMB-MT disables printing of benchmark headers.
+    - -data_type for IMB-MPI1 specifies the type to be used for communication.
+    - -red_data_type for IMB-MPI1 specifies the type to be used for reduction.
+    - -contig_type for IMB-MPI1 specifies the type to be used.
+    - -zero_size for IMB-MPI1 disable runs with message size 0.
+- Bug fixes.
+- Code cleanup.
+
 New in Intel(R) MPI Benchmarks 2018 Update 1
 --------------------------------------------
-- Support for the Microsoft* Visual Studio* 2017. Microsoft* Visual Studio* 2012 
+- Support for the Microsoft* Visual Studio* 2017. Microsoft* Visual Studio* 2012
   support is removed.
 
 New in Intel(R) MPI Benchmarks 2018
@@ -75,15 +141,16 @@ New in Intel(R) MPI Benchmarks 2018
 New in Intel(R) MPI Benchmarks 2017 Update 1
 --------------------------------------------
 - Added a new option -imb_barrier.
-- The PingPong and PingPing benchmarks are now equivalent to PingPongSpecificSource
-  and PingPingSpecificSource, respectively. Their old behavior (with MPI_ANY_SOURCE)
-  is available in PingPongAnySource and PingPingAnySource.
+- The PingPong and PingPing benchmarks are now equivalent to 
+  PingPongSpecificSource and PingPingSpecificSource, respectively. Their old 
+  behavior (with MPI_ANY_SOURCE) is available in PingPongAnySource and 
+  PingPingAnySource.
 
 New in Intel(R) MPI Benchmarks 2017
 -------------------------------------------
 - Changed default values for the -sync and -root_shift options.
 - Support for the Microsoft* Visual Studio* 2015. Microsoft* Visual Studio* 2010
-support is removed.
+  support is removed.
 - Bug fixes.
 
 New in Intel(R) MPI Benchmarks 4.1 Update 1
@@ -93,11 +160,13 @@ New in Intel(R) MPI Benchmarks 4.1 Update 1
 New in Intel(R) MPI Benchmarks 4.1
 -------------------------------------------
 - Introduced two new benchmarks: uniband and biband.
-- Introduced two new command-line options for collective benchmarks: -sync and -root_shift.
+- Introduced two new command-line options for collective benchmarks: -sync and 
+  -root_shift.
 
 New in Intel(R) MPI Benchmarks 4.0 Update 2
 -------------------------------------------
-- Fix of a bug where benchmarking was failing on certain message lengths with -DCHECK.
+- Fix of a bug where benchmarking was failing on certain message lengths with 
+  -DCHECK.
 
 New in Intel(R) MPI Benchmarks 4.0 Update 1
 -------------------------------------------
@@ -106,19 +175,20 @@ New in Intel(R) MPI Benchmarks 4.0 Update 1
 New in Intel(R) MPI Benchmarks 4.0
 -------------------------------------------
 - Introduced new components IMB-NBC and IMB-RMA that conform to the MPI-3.0 
-standard.
-  Note: These components can only be built and used with MPI libraries that conform 
-  to the MPI-3 standard.
+  standard.
+  Note: These components can only be built and used with MPI libraries that 
+  conform to the MPI-3 standard.
 - Added new targets to the Linux* OS Makefiles:
     - NBC for building IMB-NBC
     - RMA for building IMB-RMA 
-- Updated Microsoft* Visual Studio* solutions to include the IMB-NBC and 
-IMB-RMA targets.
+- Updated Microsoft* Visual Studio* solutions to include the IMB-NBC and IMB-RMA 
+  targets.
 - Consolidated all first-use documents in ReadMe_IMB.txt to improve usability.
-- Introduced a new feature to set the appropriate algorithm for automatic calculation
-of iterations. The algorithm can be set through the -iter and -iter_policy options.
+- Introduced a new feature to set the appropriate algorithm for automatic 
+  calculation of iterations. The algorithm can be set through the -iter and 
+  -iter_policy options.
 - Support for the Microsoft* Visual Studio* 2013. Microsoft* Visual Studio* 2008
-support is removed.
+  support is removed.
 
 --------------------
 Command-Line Control
@@ -135,17 +205,18 @@ command-line parameters.
 -----------------------------------------
 Building Instructions for Linux* OS
 -----------------------------------------
-1) Set the CC variable to point to the appropriate compiler wrapper, mpiicc or mpicc.
+1) Set the CC variable to point to the appropriate compiler wrapper, mpiicc or 
+   mpicc.
 2) Run one or more Makefile commands below:
 
    make clean - remove legacy binary object files and executable files
-   make MPI1 - build the executable file for the IMB-MPI1 component
-   make EXT - build the executable file for one-sided communications benchmarks
-   make IO - build the executable file for I/O benchmarks
-   make NBC - build the executable file for IMB-NBC benchmarks
-   make RMA - build the executable file for IMB-RMA benchmarks
+   make IMB-MPI1 - build the executable file for the IMB-MPI1 component
+   make IMB-EXT - build the executable file for one-sided communications benchmarks
+   make IMB-IO - build the executable file for I/O benchmarks
+   make IMB-NBC - build the executable file for IMB-NBC benchmarks
+   make IMB-RMA - build the executable file for IMB-RMA benchmarks
    make all - build all executable files available
-   
+
 3) Run the benchmarks as follows:
 
    mpirun -n <number_of_processes> IMB-<component> [arguments]
