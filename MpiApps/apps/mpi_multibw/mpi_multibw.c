@@ -105,10 +105,11 @@ find_bibw is the bi-directional bandwidth version of find_bw.
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 
 #define MAX_REQ_NUM 1000
 #define MAX_PROCS 128
-#define HOST_NAME_MAX 32
+#define HOST_NAME_MAX NAME_MAX
 
 #define MAX_ALIGNMENT 16384
 #define MAX_MSG_SIZE (1<<22)
